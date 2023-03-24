@@ -1,6 +1,13 @@
 import sqlite3  from "sqlite3";
 import { itemDbRow } from "../types/interfaces";
-
+/**
+ * updates the the status of the item.
+ * 
+ * @param topbidder - The username of the highest bidder for the item
+ * @param itemID  - The ID of a specific item
+ * @param price - The highest price for this item
+ * @param active - Determines if the item availability
+ */
 const db = new sqlite3.Database("../db/items.db", (error) => {
     if (error) {
       console.error(error.message);
