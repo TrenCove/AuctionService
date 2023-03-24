@@ -2,13 +2,15 @@ import express, { Express, Request, Response } from "express";
 import bodyParser from "body-parser";
 import { authenticateToken } from "./middleware/authenticateToken";
 import * as cron from "node-cron";
-import { CheckAuction } from "./functions/CheckAuction";
+import { CheckForwardAuction } from "./functions/CheckForwardAuction";
 import { publish } from "./functions/Publish";
 import { subscribe } from "./functions/Subscribe";
 import { unsubscribe } from "./functions/Unsubscribe";
-import cors from 'cors';
+import cors from "cors";
 import ws from "ws";
 import { itemDbRow, websockData } from "./types/interfaces";
+import { CheckDutchAuction } from "./functions/CheckDutchAuction";
+import { updateItem } from "./functions/UpdateItem";
 
 const app: Express = express();
 app.use(bodyParser.json());
@@ -18,13 +20,11 @@ app.use(
     extended: true,
   })
 );
-const port = 3001;
+const port = 3003;
 
 const wsServer = new ws.Server({ noServer: true });
-var globalSocket: ws.WebSocket;
 
 wsServer.on("connection", (socket) => {
-  globalSocket = socket;
   socket.on("message", function message(data: string) {
     console.log("Received from websocket: %s", data);
     const parsedData = JSON.parse(data) as websockData;
@@ -47,20 +47,40 @@ wsServer.on("connection", (socket) => {
 
 const pubSubList = new Map<number, string[]>(); //mapping itemID to usernames
 
-app.post("/publish", authenticateToken, async (req: Request, res: Response) => {
-    const item = req.body.item as itemDbRow;
-    await publish(item, pubSubList, globalSocket);
+app.post("/publish", async (req: Request, res: Response) => {
+  try {
+    console.log(req.body);
+    const item = req.body.data.item as itemDbRow;
+    console.log("received to publish: " + item);
+    await publish(item, pubSubList, wsServer);
+    if(item.active == false && item.auction_type == 'D'){
+      unsubscribe(item.top_bidder, item.item_id, pubSubList);
+    }
+    if(item.auction_type == 'F' && item.active == false){
+      unsubscribe(item.top_bidder, item.item_id, pubSubList);
+    }
     res.sendStatus(200);
+  } catch (error) {
+    res.sendStatus(400);
+  }
 });
 
 cron.schedule("* * * * *", async () => {
   console.log("Running auction check");
-  const dueItems = await CheckAuction();
-  if (dueItems.length > 0) {
-    dueItems.forEach(async (item) => {
+  const endingItems = await CheckForwardAuction();
+  const reducedItems = await CheckDutchAuction();
+  if (endingItems.length > 0) {
+    endingItems.forEach(async (item) => {
       console.log("Ending auction for: " + item.item_id);
-      await publish(item, pubSubList, globalSocket);
-      //TODO: Check if we need to move from active item db to the completed db or after payment
+      await updateItem(item);
+      await publish(item, pubSubList, wsServer);
+    });
+  }
+  if (reducedItems.length > 0) {
+    reducedItems.forEach(async (item) => {
+      console.log("Reducing prices for: " + item.item_id);
+      await updateItem(item);
+      await publish(item, pubSubList, wsServer);
     });
   }
 });

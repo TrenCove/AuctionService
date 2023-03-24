@@ -17,7 +17,7 @@ export interface itemDbRow {
     price: number,
     shipping_cost: number,
     active: boolean,
-    auction_type: auction_type,
+    auction_type: 'F' | 'D',
     end_time: Date
 }
 
