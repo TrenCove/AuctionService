@@ -7,17 +7,12 @@ const db = new sqlite3.Database("../db/items.db", (error) => {
   }
   console.log("Connected to the items database.");
 });
+
 /**
- * Called on every bid and when dutch auction ends, keeps track of items and their subscribers with a map
- * 
- * @param item - All possible parameters of the items data base (items database interface)
- * @param pubSubList - A map which contains a number and a string array (A pubsub)
- * @param ws - a websocket for communication
- * 
- * 
+ * Checks every Dutch auction and reduces the prices accordingly
+ * @returns an array of items that was reduced
  */
 export async function CheckDutchAuction(): Promise<itemDbRow[]> {
-  //TODO check also if active
   return new Promise((resolve, reject) => {
     db.all(
       "SELECT * FROM items WHERE auction_type='D' AND active='true'",

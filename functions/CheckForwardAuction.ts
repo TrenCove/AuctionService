@@ -7,14 +7,10 @@ const db = new sqlite3.Database("../db/items.db", (error) => {
   }
   console.log("Connected to the items database.");
 });
+
 /**
- * Called on every bid and when forward auction ends, keeps track of items and their subscribers with a map
- * 
- * @param item - All possible parameters of the items data base (items database interface)
- * @param pubSubList - A map which contains a number and a string array (A pubsub)
- * @param ws - a websocket for communication
- * 
- * 
+ * Checks every Forward auction and returns the ones where the timer has ended
+ * @returns an array of items that has ended
  */
 export async function CheckForwardAuction(): Promise<itemDbRow[]> {
   //TODO check also if active

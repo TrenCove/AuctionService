@@ -1,7 +1,8 @@
 import ws from "ws";
 import { itemDbRow, publishData } from "../types/interfaces";
+
 /**
- * Called on every bid and on auction ends, keeps track of items and their subscribers with a map
+ * Publishes an array of items to watchers of said items
  * 
  * @param item - All possible parameters of the items data base (items database interface)
  * @param pubSubList - A map which contains a number and a string array (A pubsub)
