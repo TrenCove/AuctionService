@@ -9,6 +9,15 @@ const db = new sqlite3.Database("./db/items.db", (error) => {
   console.log("Connected to the items database.");
 });
 
+/**
+ * Called on every bid and on auction ends, keeps track of items and their subscribers with a map
+ * 
+ * @param item - All possible parameters of the items data base (items database interface)
+ * @param pubSubList - A map which contains a number and a string array (A pubsub)
+ * @param ws - a websocket for communication
+ * 
+ * 
+ */
 export async function publish(
   item: itemDbRow,
   pubSubList: Map<number, string[]>,
@@ -30,6 +39,13 @@ export async function publish(
   }
 }
 
+/** 
+ * Updates items database parameteres which include the activity of it, the top bidders username, and the price
+ * 
+ * @param item - All possible parameters of the items database (items database interface)
+ * 
+ * @returns either a success message or error message depending on if the query passed
+ */
 async function updateItem(item: itemDbRow) {
   console.log("Updating db with new item %o", item);
   return new Promise((resolve, reject) => {

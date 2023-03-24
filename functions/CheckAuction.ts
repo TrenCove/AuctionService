@@ -7,7 +7,13 @@ const db = new sqlite3.Database("./db/items.db", (error) => {
   }
   console.log("Connected to the items database.");
 });
-
+/**
+ * Checks the items database for active forward auctions, checks ending time compared to the current time. If ending time has been reached
+ * it is marked in the items data base as non-active.
+ * 
+ * @returns a JSON of all found items that match the specifications.
+ * 
+ */
 export async function CheckAuction(): Promise<itemDbRow[]> {
   //TODO check also if active
   return new Promise((resolve, reject) => {
